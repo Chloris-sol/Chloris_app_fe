@@ -1,9 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Leaf, Wallet, ArrowRight, ShieldCheck, Trophy, 
+  Leaf, Wallet, ArrowRight, ShieldCheck, Trophy, type LucideIcon,
   Wind, Activity, Zap, Globe, Trees, Cpu, Lock, X, Share2, Hash, ChevronRight, ChevronDown, Coins, Settings, Copy, CheckCircle, ExternalLink, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useWallet } from '@solana/wallet-adapter-react';
+
+
+type ToastType = "success" | "info" | "error";
+
+interface Toast {
+  id: number;
+  title: string;
+  message: string;
+  type: ToastType;
+}
+
+type WalletAddress = string | null;
+
+type AssetKey = "SOL" | "USDC";
+
+interface Asset {
+  ticker: AssetKey;
+  name: string;
+  apy: string;
+  offset: string;
+  balance: string;
+  price: number;
+  gradient: string;
+}
+
+interface Milestone {
+  id: number;
+  title: string;
+  threshold: string;
+  locked: boolean;
+}
+
+const assets: Record<AssetKey, Asset> = {
+  SOL: {
+    ticker: "SOL",
+    name: "Solana",
+    apy: "8.5%",
+    offset: "+2%",
+    balance: "145.20",
+    price: 145,
+    gradient: "from-[#9945FF] to-[#14F195]",
+  },
+  USDC: {
+    ticker: "USDC",
+    name: "USD Coin",
+    apy: "12.4%",
+    offset: "+1.5%",
+    balance: "2,450.00",
+    price: 1,
+    gradient: "from-blue-500 to-cyan-400",
+  },
+};
+
 
 // --- THEME & UTILITIES ---
 const glassStyle = "bg-[#111216]/60 backdrop-blur-2xl border border-white/10 shadow-2xl";
@@ -11,7 +66,7 @@ const glassStyle = "bg-[#111216]/60 backdrop-blur-2xl border border-white/10 sha
 // --- COMPONENTS ---
 
 // 1. TOAST NOTIFICATION SYSTEM
-const ToastContainer = ({ toasts }) => (
+const ToastContainer: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
   <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
     <AnimatePresence>
       {toasts.map((toast) => (
@@ -36,7 +91,9 @@ const ToastContainer = ({ toasts }) => (
 );
 
 // 2. NAVBAR
-const Navbar = ({ onConnect, walletAddress }) => (
+const Navbar: React.FC = () => {
+    const { publicKey, connected } = useWallet();
+  return (
   <nav className="fixed top-0 left-0 right-0 z-50 px-6 md:px-8 py-5 transition-all duration-300">
     <div className="absolute inset-0 bg-[#050608]/80 backdrop-blur-md border-b border-white/5 shadow-lg"></div>
 
@@ -63,32 +120,43 @@ const Navbar = ({ onConnect, walletAddress }) => (
           ))}
         </div>
         
-        <button 
-          onClick={onConnect}
-          className="group relative px-5 py-2.5 bg-[#00FF94] hover:bg-[#00cc76] transition-all duration-300 clip-path-slant overflow-hidden"
-        >
-          <div className="absolute inset-0 border border-[#00FF94] translate-x-0.5 translate-y-0.5 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform"></div>
-          <div className="relative flex items-center gap-2 text-black font-black text-xs tracking-widest uppercase">
-            <Wallet size={14} strokeWidth={3} />
-            {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'Connect Wallet'}
-          </div>
-        </button>
+         <WalletMultiButton 
+  className="!bg-transparent !border-none !p-0 !h-auto !rounded-none"
+  style={{
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    height: 'auto'
+  }}
+  startIcon={undefined} 
+>
+  <div className="group relative px-5 py-2.5 bg-[#00FF94] hover:bg-[#00cc76] transition-all duration-300 clip-path-slant overflow-hidden">
+    <div className="absolute inset-0 border border-[#00FF94] translate-x-0.5 translate-y-0.5 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform"></div>
+    <div className="relative flex items-center gap-2 text-black font-black text-xs tracking-widest uppercase">
+      <Wallet size={14} strokeWidth={3} />
+       <span>
+            {connected && publicKey 
+              ? `${publicKey.toBase58().slice(0, 4)}...${publicKey.toBase58().slice(-4)}` 
+              : 'Connect Wallet'}
+          </span>
+    </div>
+  </div>
+</WalletMultiButton>
       </div>
     </div>
   </nav>
-);
+)};
 
 // 3. DEPOSIT VAULT (Jupiter Style)
-const DepositVault = ({ addToast, walletAddress }) => {
-  const [selectedAsset, setSelectedAsset] = useState('SOL');
+const DepositVault: React.FC<{
+  addToast: (title: string, message: string, type?: ToastType) => void;
+  walletAddress: WalletAddress;
+}> = ({ addToast, walletAddress }) => {
+  const [selectedAsset, setSelectedAsset] = useState<AssetKey>("SOL");
   const [amount, setAmount] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isDepositing, setIsDepositing] = useState(false);
 
-  const assets = {
-    SOL: { ticker: 'SOL', name: 'Solana', apy: '8.5%', offset: '+2%', balance: '145.20', price: 145, gradient: 'from-[#9945FF] to-[#14F195]' },
-    USDC: { ticker: 'USDC', name: 'USD Coin', apy: '12.4%', offset: '+1.5%', balance: '2,450.00', price: 1, gradient: 'from-blue-500 to-cyan-400' }
-  };
   const current = assets[selectedAsset];
 
   const handleDeposit = () => {
@@ -205,7 +273,13 @@ const DepositVault = ({ addToast, walletAddress }) => {
 };
 
 // 4. STAT CARD
-const StatCard = ({ label, value, sub, icon: Icon, highlight = false }) => (
+const StatCard: React.FC<{
+  label: string;
+  value: string;
+  sub: string;
+  icon: LucideIcon;
+  highlight?: boolean;
+}> = ({ label, value, sub, icon: Icon, highlight = false }) => (
   <div className={`
     ${glassStyle} p-6 rounded-xl flex flex-col justify-between group transition-all duration-300
     ${highlight ? 'border-[#00FF94]/50 shadow-[0_0_20px_rgba(0,255,148,0.1)]' : 'hover:border-white/20'}
@@ -362,7 +436,10 @@ const SynapseTerminal = () => {
 };
 
 // 6. IMPACT CARDS
-const ImpactCard = ({ item, onClick }) => (
+const ImpactCard: React.FC<{
+  item: Milestone;
+  onClick: (item: Milestone) => void;
+}> = ({ item, onClick }) => (
   <motion.div 
     layoutId={`card-${item.id}`} 
     onClick={() => !item.locked && onClick(item)}
@@ -388,7 +465,10 @@ const ImpactCard = ({ item, onClick }) => (
   </motion.div>
 );
 
-const CardModal = ({ item, onClose }) => {
+const CardModal: React.FC<{
+  item: Milestone;
+  onClose: () => void;
+}> = ({ item, onClose }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -480,18 +560,22 @@ const Footer = () => (
 
 // --- MAIN APP ---
 function App() {
-  const [selectedMilestone, setSelectedMilestone] = useState(null);
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [toasts, setToasts] = useState([]);
+const [toasts, setToasts] = useState<Toast[]>([]);
+const [walletAddress, setWalletAddress] = useState<WalletAddress>(null);
+const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
 
   // Toast Helper
-  const addToast = (title, message, type = 'success') => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, title, message, type }]);
-    setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
-  };
+const addToast = (
+  title: string,
+  message: string,
+  type: ToastType = "success"
+) => {
+  const id = Date.now();
+  setToasts(prev => [...prev, { id, title, message, type }]);
+  setTimeout(() => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, 4000);
+};
 
   // Mock Wallet Connect
   const handleConnect = () => {
@@ -527,7 +611,7 @@ function App() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-500 opacity-[0.03] blur-[200px] rounded-full"></div>
       </div>
 
-      <Navbar onConnect={handleConnect} walletAddress={walletAddress} />
+      <Navbar  />
       <ToastContainer toasts={toasts} />
       
       <main className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-8 py-32">
