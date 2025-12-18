@@ -70,13 +70,11 @@ const Navbar: React.FC = () => {
     <div className="relative z-10 flex justify-between items-center max-w-[1400px] mx-auto w-full">
       <div className="flex items-center gap-3">
         <div className="relative group cursor-pointer">
-          <div className="absolute inset-0 bg-[#00FF94] blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
-          <Leaf className="text-[#00FF94] relative z-10" size={28} />
+        <div className="absolute inset-0 bg-[#00FF94] blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+          <img src="/chloris-logo.png" alt="" className='h-6'/>
         </div>
         <div className="flex flex-col">
-          <h1 className="text-xl font-black tracking-[0.2em] text-white uppercase font-sans leading-none">
-            Chloris
-          </h1>
+          <img src="/chloris-text.png" alt="" className='h-3'/>
           <span className="text-[9px] text-[#00FF94] font-mono tracking-widest uppercase opacity-80">Beta v1.0.4</span>
         </div>
       </div>
@@ -590,43 +588,77 @@ const CardModal: React.FC<{
 
 // 7. FOOTER
 const Footer = () => (
-    <footer className="border-t border-white/5 bg-[#020202] py-16 px-8 relative z-10 mt-20">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div className="col-span-1 md:col-span-2">
-                <div className="flex items-center gap-2 mb-4">
-                    <Leaf size={20} className="text-[#00FF94]" />
-                    <span className="font-black text-xl text-white uppercase tracking-widest">Chloris</span>
-                </div>
-                <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
-                    The first decentralized Eco-DeFi Aggregator on Solana. 
-                    Merging high-frequency trading yield with verifiable on-chain carbon retirement.
-                </p>
-            </div>
-            <div>
-                <h4 className="font-bold text-white uppercase tracking-widest mb-6 text-xs">Protocol</h4>
-                <ul className="space-y-4 text-sm text-gray-500 font-mono uppercase tracking-wide">
-                    <li className="hover:text-[#00FF94] cursor-pointer">Vault Strategies</li>
-                    <li className="hover:text-[#00FF94] cursor-pointer">Tokenomics</li>
-                    <li className="hover:text-[#00FF94] cursor-pointer">Impact Verify</li>
-                </ul>
-            </div>
-            <div>
-                <h4 className="font-bold text-white uppercase tracking-widest mb-6 text-xs">Social</h4>
-                <ul className="space-y-4 text-sm text-gray-500 font-mono uppercase tracking-wide">
-                    <li className="hover:text-[#00FF94] cursor-pointer">Twitter / X</li>
-                    <li className="hover:text-[#00FF94] cursor-pointer">Discord</li>
-                    <li className="hover:text-[#00FF94] cursor-pointer">GitHub</li>
-                </ul>
-            </div>
+  <footer className="relative z-10 py-12 md:py-16 border-t border-white/10 bg-black">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12 mb-12">
+      <div className="col-span-1 md:col-span-2">
+        <div className="flex items-center gap-3 mb-6">
+           <img src="/chloris-logo.png" alt="" className='h-6'/>
+            <img src="/chloris-text.png" alt="" className='h-3'/>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-16 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] text-gray-600 uppercase font-mono tracking-widest">
-            <span>© 2025 Chloris Protocol. All Rights Reserved.</span>
-            <div className="flex gap-4">
-                <span>Terms</span>
-                <span>Privacy</span>
-            </div>
-        </div>
-    </footer>
+
+        <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
+         Generating compounded returns on Solana while automatically offsetting carbon with AI-driven RWA strategies.
+        </p>
+      </div>
+
+      <div>
+        <h4 className="text-white font-bold mb-4 md:mb-6 font-mono text-sm uppercase">
+          Built With
+        </h4>
+        <ul className="space-y-3 md:space-y-4 text-sm text-gray-500">
+          <li className="flex items-center gap-2">
+            <img
+              alt="Avalanche Logo"
+              className="w-5 h-5"
+              src="/solana-logo.png"
+            />
+            Solana
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h4 className="text-white font-bold mb-4 md:mb-6 font-mono text-sm uppercase">
+          Community
+        </h4>
+        <ul className="space-y-3 md:space-y-4 text-sm text-gray-500 mb-4">
+          <li className="hover:text-[#00FF94] cursor-pointer transition-colors">
+            <a href="#" className="transition-colors">
+              Documentation
+            </a>
+          </li>
+          <li className="hover:text-[#00FF94] cursor-pointer transition-colors">
+            <a
+              href="https://github.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className=" transition-colors"
+            >
+              GitHub
+            </a>
+          </li>
+          <li className="hover:text-[#00FF94] cursor-pointer transition-colors">
+            <a
+              href="mailto:chloris@gmail.com"
+              className="transition-colors"
+            >
+              chloris@gmail.com
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] md:text-xs text-gray-600 font-mono uppercase tracking-wider text-center md:text-left">
+      <div>© 2025 CHLORIS PROTOCOL. DECENTRALIZED ECO-FINANCE.</div>
+      <div className="flex gap-6 md:gap-8">
+        <span>Privacy Policy</span>
+        <span>Terms of Service</span>
+      </div>
+    </div>
+  </div>
+</footer>
 );
 
 

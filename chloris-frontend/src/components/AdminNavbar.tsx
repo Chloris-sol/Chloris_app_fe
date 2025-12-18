@@ -14,7 +14,8 @@ export const AdminNavbar: React.FC<{ isAdmin?: boolean }> = ({ isAdmin }) => {
         <div className="flex items-center gap-3">
           <div className="relative group cursor-pointer">
             <div className={`absolute inset-0 ${isAdmin ? 'bg-[#00FF94]' : 'bg-red-500' } blur-lg opacity-20 transition-opacity`}></div>
-            <Leaf className={`${isAdmin ? 'text-[#00FF94]' : 'text-red-500'} relative z-10`} size={28} />
+            
+            <img src="/chloris-logo.png" alt="" className='h-6'/>
           </div>
           <div className="flex flex-col">
             <h1 className="text-xl font-black tracking-[0.2em] text-white uppercase leading-none">
