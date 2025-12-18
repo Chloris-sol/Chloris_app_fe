@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnchorProvider, Program, type Idl } from "@coral-xyz/anchor";
+import { AnchorProvider, Program} from "@coral-xyz/anchor";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import idl from "../idl/chloris_sol.json";
 import { type ChlorisSol } from "../types/chloris_sol";
-
-// ===============================
-// Constants
-// ===============================
-
-const typedIdl = idl as Idl;
-
 
 // ===============================
 // Hook
@@ -38,7 +31,7 @@ export function useChlorisAdmin() {
 
   const program = useMemo(() => {
     if (!provider) return null;
-    return new Program<ChlorisSol>(typedIdl, provider);
+    return new Program<ChlorisSol>(idl, provider);
   }, [provider]);
 
   // ===============================
@@ -71,6 +64,7 @@ export function useChlorisAdmin() {
     try {
       const state = await program.account.globalState.fetch(globalStatePda);
       setGlobalState(state);
+      console.log("Fetched global state:", state);
       return state;
     } catch {
       setGlobalState(null);
@@ -91,14 +85,10 @@ export function useChlorisAdmin() {
   const isAdmin = useMemo(() => {
     if (!globalState || !wallet.publicKey) return false;
 
-    const pubkey = wallet.publicKey;
-
-    if (globalState.superAdmin?.equals(wallet.publicKey)) return true;
+    if (globalState.admin?.equals(wallet.publicKey)) return true;
 
     return (
-      globalState.admins?.some((a: PublicKey) =>
-        a.equals(pubkey)
-      ) ?? false
+      false
     );
   }, [globalState, wallet.publicKey]);
 

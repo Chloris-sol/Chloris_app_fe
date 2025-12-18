@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
@@ -12,7 +11,7 @@ const wallets = [new PhantomWalletAdapter()];
 
 export function SolanaProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ConnectionProvider endpoint="https://api.mainnet-beta.solana.com">
+    <ConnectionProvider endpoint="https://api.devnet.solana.com">
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>

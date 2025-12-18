@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/chloris_sol.json`.
  */
 export type ChlorisSol = {
-  "address": "6w49e6jNpWmuPEZNVzJjPfafxPxENELR5dcyb9hGdhnu",
+  "address": "DNBXiDEUTbPJSA2tjKuQh4o1kBVMg9khu1HHe8s5yS49",
   "metadata": {
     "name": "chlorisSol",
     "version": "0.1.0",

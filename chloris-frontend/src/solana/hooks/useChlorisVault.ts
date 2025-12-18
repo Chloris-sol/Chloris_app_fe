@@ -45,14 +45,14 @@ export function useChlorisVault() {
     const state = await program.account.globalState.fetch(globalStatePda);
     setGlobalState(state);
   }, [program, globalStatePda]);
-
   const fetchUserState = useCallback(async () => {
     if (!program || !userStatePda) return;
 
     try {
       const state = await program.account.userState.fetch(userStatePda);
       setUserState(state);
-    } catch {
+    } catch(err) {
+      console.log(err)
       setUserState(null);
     }
   }, [program, userStatePda]);
