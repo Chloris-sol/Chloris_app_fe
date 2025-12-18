@@ -312,13 +312,13 @@ const canNewEpoch = phase === "claiming";
                 </div>
 
                 <div className="grid grid-cols-2 gap-y-4 text-xs font-mono">
-                  <span className="text-gray-500">Yield / Lamport</span>
+                  <span className="text-gray-500">Yield</span>
                   <span>
                     {(globalState?.yieldPerLamport / LAMPORTS_PER_SOL).toFixed(4) || "0"}
                   </span>
 
                   <span className="text-gray-500">
-                    NCT Yield / Lamport
+                    NCT Yield
                   </span>
                   <span>
                     {(globalState?.nctYieldPerLamport / LAMPORTS_PER_SOL).toFixed(4) || "0"}

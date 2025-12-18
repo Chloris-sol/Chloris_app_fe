@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/chloris_sol.json`.
  */
 export type ChlorisSol = {
-  "address": "DNBXiDEUTbPJSA2tjKuQh4o1kBVMg9khu1HHe8s5yS49",
+  "address": "3h5ShZh1CPw4nXv5uLuifcBppm5W5hcRHG5ivaoXJdih",
   "metadata": {
     "name": "chlorisSol",
     "version": "0.1.0",
@@ -674,6 +674,13 @@ export type ChlorisSol = {
             "name": "nctYieldPerLamport",
             "docs": [
               "NCT yield per lamport (scaled by 1e9) - for tracking user NCT contributions"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "lastEpochApyBps",
+            "docs": [
+              "Last epoch's APY in basis points (e.g., 1200 = 12%) - set after end_epoch"
             ],
             "type": "u64"
           },

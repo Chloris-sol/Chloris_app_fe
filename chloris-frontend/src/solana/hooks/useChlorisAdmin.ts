@@ -64,7 +64,7 @@ export function useChlorisAdmin() {
     try {
       const state = await program.account.globalState.fetch(globalStatePda);
       setGlobalState(state);
-      console.log("Fetched global state:", state);
+    //   console.log("Fetched global state:", state);
       return state;
     } catch {
       setGlobalState(null);

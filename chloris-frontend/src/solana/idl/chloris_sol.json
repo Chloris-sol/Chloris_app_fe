@@ -1,5 +1,5 @@
 {
-  "address": "DNBXiDEUTbPJSA2tjKuQh4o1kBVMg9khu1HHe8s5yS49",
+  "address": "3h5ShZh1CPw4nXv5uLuifcBppm5W5hcRHG5ivaoXJdih",
   "metadata": {
     "name": "chloris_sol",
     "version": "0.1.0",
@@ -668,6 +668,13 @@
             "name": "nct_yield_per_lamport",
             "docs": [
               "NCT yield per lamport (scaled by 1e9) - for tracking user NCT contributions"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_epoch_apy_bps",
+            "docs": [
+              "Last epoch's APY in basis points (e.g., 1200 = 12%) - set after end_epoch"
             ],
             "type": "u64"
           },

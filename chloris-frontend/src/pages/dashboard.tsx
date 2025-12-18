@@ -11,7 +11,6 @@ import { useChlorisVault } from '../solana/hooks/useChlorisVault';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import solanaLogo from "../assets/solana-logo.png"
 
-
 type ToastType = "success" | "info" | "error";
 
 interface Toast {
@@ -128,7 +127,8 @@ const DepositVault: React.FC<{
   refresh: () => void;
   loading: boolean;
   userState: any;
-}> = ({ addToast, walletAddress, userSolBalance, phase, depositedSol, estimatedYieldSol, onDeposit, onClaim, refresh, loading }) => {
+  apy?: number;
+}> = ({ addToast, walletAddress, userSolBalance, phase, depositedSol, estimatedYieldSol, onDeposit, onClaim, refresh, loading, apy }) => {
   const [amount, setAmount] = useState('');
   const [isDepositing, setIsDepositing] = useState(false);
 
@@ -202,7 +202,7 @@ const DepositVault: React.FC<{
                     <p className="text-gray-500 text-[10px] uppercase tracking-widest">Net APY</p>
                     <Info size={12} className="text-gray-600" />
                 </div>
-                <p className="text-3xl font-black text-white">14%</p>
+                <p className="text-3xl font-black text-white">{apy ? apy : '14'}%</p>
             </div>
             <div className="bg-[#0A0A0A]/40 backdrop-blur-md p-4 rounded-xl border border-white/5 flex flex-col justify-between h-24">
                 <div className="flex justify-between items-start">
@@ -681,6 +681,7 @@ useEffect(() => {
 
 const [nctTreasuryBalance, setNctTreasuryBalance] = useState(0);
 const [userSolBalance, setUserSolBalance] = useState(0);
+const apy = globalState?.lastEpochApyBps / 100;
 
 useEffect(() => {
   const fetchBalances = async () => {
@@ -786,6 +787,7 @@ const handleClaim = async () => {
                  loading={loading}
                  userState={userState}
                  refresh={refetch}
+                 apy={apy}
                />
             </div>
             <div className="lg:col-span-5 h-full">
