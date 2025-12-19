@@ -22,9 +22,13 @@ interface Toast {
 
 type WalletAddress = string | null;
 
+type MilestoneType = "CLAIM" | "CARBON";
+
 interface Milestone {
   id: number;
   title: string;
+  type: MilestoneType;
+  value: number;
   threshold: string;
   locked: boolean;
 }
@@ -495,10 +499,23 @@ const ImpactCard: React.FC<{
   </motion.div>
 );
 
+const shortTx = (tx?: string) =>
+  tx ? `${tx.slice(0, 4)}...${tx.slice(-4)}` : "—";
+
+const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-gray-500 uppercase tracking-wider text-[10px]">
+      {label}
+    </span>
+    <span className="text-white font-bold text-sm">{value}</span>
+  </div>
+);
 const CardModal: React.FC<{
   item: Milestone;
+  userState: any;
+  userNctContribution: number;
   onClose: () => void;
-}> = ({ item, onClose }) => {
+}> = ({ item, userState, userNctContribution, onClose }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [canFlip, setCanFlip] = useState(false);
   
@@ -540,36 +557,79 @@ const CardModal: React.FC<{
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.2 }}
       >
-        <div
-          onClick={handleFlip}
-          className="w-full h-full relative preserve-3d transition-transform duration-700 cursor-pointer"
-          style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
-        >
-          <div className="absolute inset-0 backface-hidden bg-[#111216]/80 backdrop-blur-xl border border-[#00FF94]/50 rounded-2xl flex flex-col items-center justify-center p-8 shadow-[0_0_100px_rgba(0,255,148,0.15)]">
-            <div className="absolute top-4 right-4 text-[#00FF94] animate-pulse"><Activity size={20} /></div>
-            <Trophy size={80} className="text-[#00FF94] mb-8 drop-shadow-[0_0_20px_#00FF94]" />
-            <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">{item.title}</h2>
-            <div className="flex items-center gap-2 text-gray-400 font-mono text-xs uppercase tracking-widest mt-4"><span>Flip Card</span><ChevronRight size={12} /></div>
-          </div>
-          <div className="absolute inset-0 backface-hidden bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/20 rounded-2xl p-8 rotate-y-180 flex flex-col justify-between shadow-2xl">
-            <div>
-               <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                 <h3 className="text-[#00FF94] font-black uppercase text-xl">Asset Data</h3>
-                 <Hash size={16} className="text-gray-500"/>
-               </div>
-               <div className="space-y-6 font-mono text-sm">
-                 <div className="flex justify-between"><span className="text-gray-500 uppercase tracking-wider text-xs">Rarity</span><span className="text-white font-bold">Legendary</span></div>
-                 <div className="flex justify-between"><span className="text-gray-500 uppercase tracking-wider text-xs">Mint Date</span><span className="text-white font-bold">2025-12-17</span></div>
-                 <div className="flex justify-between items-center p-3 bg-[#00FF94]/10 rounded border border-[#00FF94]/20">
-                   <span className="text-gray-400 text-xs">Carbon Burned</span><span className="text-[#00FF94] font-bold">50.0 tCO2</span>
-                 </div>
-               </div>
-            </div>
-            <button className="w-full py-4 bg-[#00FF94] text-black font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white transition-colors rounded">
-               <Share2 size={16} /> Share Proof
-            </button>
-          </div>
-        </div>
+        <motion.div
+  onClick={handleFlip}
+  className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-700 cursor-pointer"
+  style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+>
+  {/* FRONT FACE */}
+  <div className="absolute inset-0 [backface-visibility:hidden] bg-[#111216]/80 backdrop-blur-xl border border-[#00FF94]/50 rounded-2xl flex flex-col items-center justify-center p-8 shadow-[0_0_100px_rgba(0,255,148,0.15)]">
+    <div className="absolute top-4 right-4 text-[#00FF94] animate-pulse">
+      <Activity size={20} />
+    </div>
+    <Trophy size={80} className="text-[#00FF94] mb-8 drop-shadow-[0_0_20px_#00FF94]" />
+    <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">{item.title}</h2>
+    <div className="flex items-center gap-2 text-gray-400 font-mono text-xs uppercase tracking-widest mt-4">
+      <span>Flip Card</span><ChevronRight size={12} />
+    </div>
+  </div>
+
+  {/* BACK FACE */}
+  <div
+    className="absolute inset-0 [backface-visibility:hidden] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/20 rounded-2xl p-8 flex flex-col justify-between shadow-2xl"
+    style={{ transform: 'rotateY(180deg)' }}
+  >
+    {/* HEADER */}
+    <div className="mb-6 border-b border-white/10 pb-4">
+      <h3 className="text-[#00FF94] font-black uppercase tracking-widest text-sm">Proof of Impact</h3>
+      <p className="text-gray-500 text-xs font-mono mt-1">Verifiable on Solana</p>
+    </div>
+
+    {/* ACTION DATA */}
+    <div className="space-y-4 font-mono text-xs">
+      {item.type === "CLAIM" && (
+        <>
+          <Row label="Action" value="Rewards Claimed" />
+          <Row label="Total Claims" value={userState?.totalClaims?.toString() ?? "0"} />
+          <Row label="Last Claim Tx" value={shortTx(userState?.lastClaimTx)} />
+        </>
+      )}
+      {item.type === "CARBON" && (
+        <>
+          <Row label="SOL Burned" value={`${userNctContribution.toFixed(2)} SOL`} />
+          <Row label="CO₂ Offset" value={`${(userNctContribution * 0.036).toFixed(2)} tCO₂`} />
+          <Row label="Burn Tx" value={shortTx(userState?.lastBurnTx)} />
+        </>
+      )}
+    </div>
+
+    {/* REAL WORLD IMPACT */}
+    <div className="mt-6 space-y-3 font-mono text-xs border-t border-white/10 pt-4">
+      <h4 className="text-[#00FF94] uppercase tracking-widest">Real-World Impact</h4>
+      <Row label="Trees Equivalent" value={`${Math.floor(userNctContribution * 1.4)} Trees`} />
+      <Row label="Clean Energy" value={`${Math.floor(userNctContribution * 120)} kWh`} />
+    </div>
+
+    {/* ACTION BUTTONS */}
+    <div className="mt-6 flex gap-3">
+      <a
+        href={
+          item.type === "CLAIM"
+            ? `https://explorer.solana.com/tx/${userState?.lastClaimTx}`
+            : `https://explorer.solana.com/tx/${userState?.lastBurnTx}`
+        }
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex-1 py-3 bg-white/5 border border-white/10 rounded text-center text-xs font-mono uppercase tracking-widest hover:bg-[#00FF94] hover:text-black transition"
+      >
+        View Tx
+      </a>
+      <button className="flex-1 py-3 bg-[#00FF94] text-black rounded text-xs font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(0,255,148,0.4)] transition">
+        Share Proof
+      </button>
+    </div>
+  </div>
+</motion.div>
       </motion.div>
       <motion.button 
         onClick={(e) => { e.stopPropagation(); onClose(); }} 
@@ -671,6 +731,7 @@ const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(nul
 const { connection } = useConnection();
 const wallet = useWallet();
 
+
 useEffect(() => {
   if (wallet.publicKey) {
     setWalletAddress(wallet.publicKey.toBase58());
@@ -727,16 +788,54 @@ const handleDeposit = async (amount: number) => {
   await deposit(amount);
 };
 
+
 const handleClaim = async () => {
-  await claim();
+  
+    await claim();
 };
 
-  const milestones = [
-    { id: 1, title: "Genesis Sprout", threshold: "First Tx", locked: false },
-    { id: 2, title: "Carbon Guardian", threshold: "1 Tonne Burn", locked: true },
-    { id: 3, title: "Forest Titan", threshold: "100 Tonnes", locked: true },
-    { id: 4, title: "Gaia's Hand", threshold: "Top 1% User", locked: true },
-  ];
+const milestones: Milestone[] = [
+  {
+    id: 1,
+    title: "Rewards Claimed",
+    type: "CLAIM",
+    value: 0,
+    threshold: "Claim once",
+    locked: (userState?.totalClaims?.toNumber() ?? 0) === 0,
+  },
+  {
+    id: 2,
+    title: "Carbon Reducer I",
+    type: "CARBON",
+    value: 200,
+    threshold: "200 SOL Burned",
+    locked: userNctContribution < 200,
+  },
+  {
+    id: 3,
+    title: "Carbon Reducer II",
+    type: "CARBON",
+    value: 500,
+    threshold: "500 SOL Burned",
+    locked: userNctContribution < 500,
+  },
+  {
+    id: 4,
+    title: "Carbon Reducer III",
+    type: "CARBON",
+    value: 1000,
+    threshold: "1,000 SOL Burned",
+    locked: userNctContribution < 1000,
+  },
+  {
+    id: 5,
+    title: "Carbon Reducer IV",
+    type: "CARBON",
+    value: 2000,
+    threshold: "2,000 SOL Burned",
+    locked: userNctContribution < 2000,
+  },
+];
 
   return (
     <div className="min-h-screen bg-[#050608] text-white font-sans selection:bg-[#00FF94] selection:text-black overflow-x-hidden">
@@ -818,10 +917,12 @@ const handleClaim = async () => {
 
       <AnimatePresence>
         {selectedMilestone && (
-          <CardModal 
-            item={selectedMilestone} 
-            onClose={() => setSelectedMilestone(null)} 
-          />
+          <CardModal
+          item={selectedMilestone}
+          userState={userState}
+          userNctContribution={userNctContribution}
+          onClose={() => setSelectedMilestone(null)}
+        />
         )}
       </AnimatePresence>
 
