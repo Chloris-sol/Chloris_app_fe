@@ -181,6 +181,8 @@ export function useChlorisVault() {
         .rpc();
 
       await Promise.all([fetchGlobalState(), fetchUserState()]);
+      
+      
     } catch (err: any) {
       setError(err.message);
     } finally {

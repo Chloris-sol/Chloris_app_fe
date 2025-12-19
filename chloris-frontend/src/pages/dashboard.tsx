@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Leaf, Wallet, Trophy, type LucideIcon,
   Wind, Activity, Zap, Globe, Trees, Cpu, Lock, X, Share2, Hash, ChevronRight, CheckCircle, ExternalLink, Info,
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useChlorisVault } from '../solana/hooks/useChlorisVault';
+import { useNCTPriceInSOL } from '../solana/hooks/prices';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import solanaLogo from "../assets/solana-logo.png"
 
@@ -22,13 +23,13 @@ interface Toast {
 
 type WalletAddress = string | null;
 
-type MilestoneType = "CLAIM" | "CARBON";
+type MilestoneType = "DEPOSIT" | "CARBON";
 
 interface Milestone {
   id: number;
   title: string;
   type: MilestoneType;
-  value: number;
+  value?: number;
   threshold: string;
   locked: boolean;
 }
@@ -83,13 +84,13 @@ const Navbar: React.FC = () => {
       </div>
       
       <div className="flex items-center gap-8">
-        <div className="hidden md:flex gap-8 text-[10px] font-mono tracking-widest text-gray-400 uppercase">
+        {/* <div className="hidden md:flex gap-8 text-[10px] font-mono tracking-widest text-gray-400 uppercase">
           {['Dashboard', 'Mechanism', 'Docs', 'Governance'].map((item) => (
             <span key={item} className="hover:text-[#00FF94] cursor-pointer transition-colors duration-300 hover:drop-shadow-[0_0_8px_rgba(0,255,148,0.5)]">
               {item}
             </span>
           ))}
-        </div>
+        </div> */}
         
          <WalletMultiButton 
   className="!bg-transparent !border-none !p-0 !h-auto !rounded-none"
@@ -514,125 +515,136 @@ const CardModal: React.FC<{
   item: Milestone;
   userState: any;
   userNctContribution: number;
+  depositedSol: number; 
   onClose: () => void;
-}> = ({ item, userState, userNctContribution, onClose }) => {
+  autoFlip?: boolean;
+}> = ({ item, userState, userNctContribution,depositedSol,  onClose, autoFlip = false }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const { priceInSOL: nctPriceInSOL, loading: nctLoading } = useNCTPriceInSOL();
   const [canFlip, setCanFlip] = useState(false);
-  
+
   useEffect(() => {
-    // Allow flipping after the layout animation completes
-    const timer = setTimeout(() => {
-      setCanFlip(true);
-    }, 100);
+    const timer = setTimeout(() => setCanFlip(true), 300);
     return () => clearTimeout(timer);
   }, []);
-  
+
+  useEffect(() => {
+    if (autoFlip && canFlip && !isFlipped) {
+      const timer = setTimeout(() => setIsFlipped(true), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [autoFlip, canFlip, isFlipped]);
+
   const handleFlip = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (canFlip) {
-      setIsFlipped(!isFlipped);
+      setIsFlipped(prev => !prev);
     }
   };
-  
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
-  
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={handleBackdropClick}>
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
         className="absolute inset-0 bg-[#050608]/90 backdrop-blur-2xl"
       />
-      <motion.div 
-        className="relative w-full max-w-sm aspect-[3/4] perspective-1000 z-10" 
+      <motion.div
+        className="relative w-full max-w-sm aspect-[3/4] perspective-1000 z-10"
         onClick={(e) => e.stopPropagation()}
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.85 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ duration: 0.2 }}
+        exit={{ opacity: 0, scale: 0.85 }}
+        transition={{ duration: 0.4 }}
       >
         <motion.div
-  onClick={handleFlip}
-  className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-700 cursor-pointer"
-  style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
->
-  {/* FRONT FACE */}
-  <div className="absolute inset-0 [backface-visibility:hidden] bg-[#111216]/80 backdrop-blur-xl border border-[#00FF94]/50 rounded-2xl flex flex-col items-center justify-center p-8 shadow-[0_0_100px_rgba(0,255,148,0.15)]">
-    <div className="absolute top-4 right-4 text-[#00FF94] animate-pulse">
-      <Activity size={20} />
-    </div>
-    <Trophy size={80} className="text-[#00FF94] mb-8 drop-shadow-[0_0_20px_#00FF94]" />
-    <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">{item.title}</h2>
-    <div className="flex items-center gap-2 text-gray-400 font-mono text-xs uppercase tracking-widest mt-4">
-      <span>Flip Card</span><ChevronRight size={12} />
-    </div>
-  </div>
+          onClick={handleFlip}
+          className="w-full h-full relative [transform-style:preserve-3d] transition-transform duration-1000 cursor-pointer"
+          style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+        >
+          {/* FRONT FACE */}
+          <div className="absolute inset-0 [backface-visibility:hidden] bg-[#111216]/80 backdrop-blur-xl border border-[#00FF94]/50 rounded-2xl flex flex-col items-center justify-center p-8 shadow-[0_0_100px_rgba(0,255,148,0.15)]">
+            <Trophy size={80} className="text-[#00FF94] mb-8 drop-shadow-[0_0_20px_#00FF94]" />
+            <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">{item.title}</h2>
+            <p className="text-gray-400 font-mono text-xs uppercase tracking-widest mt-4">
+              {autoFlip ? 'Achievement Unlocked!' : 'Tap to flip'}
+            </p>
+          </div>
 
-  {/* BACK FACE */}
-  <div
-    className="absolute inset-0 [backface-visibility:hidden] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/20 rounded-2xl p-8 flex flex-col justify-between shadow-2xl"
-    style={{ transform: 'rotateY(180deg)' }}
-  >
-    {/* HEADER */}
-    <div className="mb-6 border-b border-white/10 pb-4">
-      <h3 className="text-[#00FF94] font-black uppercase tracking-widest text-sm">Proof of Impact</h3>
-      <p className="text-gray-500 text-xs font-mono mt-1">Verifiable on Solana</p>
-    </div>
+          {/* BACK FACE */}
+          <div
+            className="absolute inset-0 [backface-visibility:hidden] bg-[#0A0A0A]/95 backdrop-blur-xl border border-white/20 rounded-2xl p-8 flex flex-col justify-between shadow-2xl"
+            style={{ transform: 'rotateY(180deg)' }}
+          >
+            {/* HEADER */}
+            <div className="mb-6 border-b border-white/10 pb-4">
+              <h3 className="text-[#00FF94] font-black uppercase tracking-widest text-sm">Proof of Impact</h3>
+              <p className="text-gray-500 text-xs font-mono mt-1">Verifiable on Solana</p>
+            </div>
 
-    {/* ACTION DATA */}
-    <div className="space-y-4 font-mono text-xs">
-      {item.type === "CLAIM" && (
-        <>
-          <Row label="Action" value="Rewards Claimed" />
-          <Row label="Total Claims" value={userState?.totalClaims?.toString() ?? "0"} />
-          <Row label="Last Claim Tx" value={shortTx(userState?.lastClaimTx)} />
-        </>
-      )}
-      {item.type === "CARBON" && (
-        <>
-          <Row label="SOL Burned" value={`${userNctContribution.toFixed(2)} SOL`} />
-          <Row label="CO₂ Offset" value={`${(userNctContribution * 0.036).toFixed(2)} tCO₂`} />
-          <Row label="Burn Tx" value={shortTx(userState?.lastBurnTx)} />
-        </>
-      )}
-    </div>
+            {/* ACTION DATA */}
+            <div className="space-y-4 font-mono text-xs">
+              {item.type === "DEPOSIT" && (
+                <>
+                  <Row label="Action" value="First Deposit" />
+                  <Row label="Deposit Amount" value={`${depositedSol.toFixed(4)} SOL`} />
+                  
+                </>
+              )}
+              {item.type === "CARBON" && (
+                <>
+                  <Row label="SOL Burned" value={`${userNctContribution.toFixed(2)} SOL`} />
+                  <Row label="CO₂ Offset" value={`${(userNctContribution * 0.036).toFixed(2)} tCO₂`} />
+                  
+                </>
+              )}
+            </div>
 
-    {/* REAL WORLD IMPACT */}
-    <div className="mt-6 space-y-3 font-mono text-xs border-t border-white/10 pt-4">
-      <h4 className="text-[#00FF94] uppercase tracking-widest">Real-World Impact</h4>
-      <Row label="Trees Equivalent" value={`${Math.floor(userNctContribution * 1.4)} Trees`} />
-      <Row label="Clean Energy" value={`${Math.floor(userNctContribution * 120)} kWh`} />
-    </div>
+            {/* REAL WORLD IMPACT */}
+            <div className="mt-6 space-y-3 font-mono text-xs border-t border-white/10 pt-4">
+              <h4 className="text-[#00FF94] uppercase tracking-widest">Real-World Impact</h4>
+              <Row label="Trees Equivalent" value={
+  nctLoading || !nctPriceInSOL
+    ? ''
+    : `${Math.floor((userNctContribution / nctPriceInSOL) * 31).toLocaleString()} Trees`
+} />
+              <Row label="Clean Energy" value={`${Math.floor(userNctContribution * 120)} kWh`} />
+            </div>
 
-    {/* ACTION BUTTONS */}
-    <div className="mt-6 flex gap-3">
-      <a
-        href={
-          item.type === "CLAIM"
-            ? `https://explorer.solana.com/tx/${userState?.lastClaimTx}`
-            : `https://explorer.solana.com/tx/${userState?.lastBurnTx}`
-        }
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex-1 py-3 bg-white/5 border border-white/10 rounded text-center text-xs font-mono uppercase tracking-widest hover:bg-[#00FF94] hover:text-black transition"
-      >
-        View Tx
-      </a>
-      <button className="flex-1 py-3 bg-[#00FF94] text-black rounded text-xs font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(0,255,148,0.4)] transition">
-        Share Proof
-      </button>
-    </div>
-  </div>
-</motion.div>
+            {/* ACTION BUTTONS */}
+            <div className="mt-6 flex gap-3">
+              {/*<a
+                href={
+                  item.type === "DEPOSIT"
+                    ? `https://explorer.solana.com/tx/${userState?.lastDepositTx || ''}`
+                    : `https://explorer.solana.com/tx/${userState?.lastBurnTx || ''}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3 bg-white/5 border border-white/10 rounded text-center text-xs font-mono uppercase tracking-widest hover:bg-[#00FF94] hover:text-black transition"
+              >
+                View Tx
+              </a>*/}
+              <button className="flex-1 py-3 bg-[#00FF94] text-black rounded text-xs font-black uppercase tracking-widest hover:shadow-[0_0_20px_rgba(0,255,148,0.4)] transition">
+                Share Proof
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
-      <motion.button 
-        onClick={(e) => { e.stopPropagation(); onClose(); }} 
+
+      <motion.button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         className="absolute top-8 right-8 text-white hover:text-[#00FF94] transition-colors z-50 p-2 bg-white/5 rounded-full backdrop-blur-md"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -644,8 +656,6 @@ const CardModal: React.FC<{
     </div>
   );
 };
-
-
 // 7. FOOTER
 const Footer = () => (
   <footer className="relative z-10 py-12 md:py-16 border-t border-white/10 bg-black">
@@ -722,195 +732,281 @@ const Footer = () => (
 );
 
 
-// --- MAIN APP ---
-function Dashboard() {
-const { userState, globalState, phase, depositedSol, estimatedYieldSol, deposit, claim, initializeUser, loading, publicKey, refetch } = useChlorisVault();
-const [toasts, setToasts] = useState<Toast[]>([]);
-const [walletAddress, setWalletAddress] = useState<WalletAddress>(null);
-const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
-const { connection } = useConnection();
-const wallet = useWallet();
+ //MAIN APP
+ function Dashboard() {
+  const { userState, globalState, phase, depositedSol, estimatedYieldSol, deposit, claim, initializeUser, loading, publicKey, refetch } = useChlorisVault();
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [walletAddress, setWalletAddress] = useState<WalletAddress>(null);
+  const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
+  const [autoFlip, setAutoFlip] = useState(false);
+  const { priceInSOL: nctPriceInSOL, loading: nctLoading } = useNCTPriceInSOL();
+  const { connection } = useConnection();
+  const wallet = useWallet();
 
+  
+  const triggeredMilestones = useRef<Set<number>>(
+    new Set(JSON.parse(localStorage.getItem("shownMilestones") || "[]"))
+  );
 
-useEffect(() => {
-  if (wallet.publicKey) {
-    setWalletAddress(wallet.publicKey.toBase58());
-  } else {
-    setWalletAddress(null);
-  }
-}, [wallet.publicKey]);
+  
+  
+  useEffect(() => {
+    if (wallet.publicKey) {
+      setWalletAddress(wallet.publicKey.toBase58());
+    } else {
+      setWalletAddress(null);
+    }
+  }, [wallet.publicKey]);
 
-const [nctTreasuryBalance, setNctTreasuryBalance] = useState(0);
-const [userSolBalance, setUserSolBalance] = useState(0);
-const apy = globalState?.lastEpochApyBps / 100;
+  const [nctTreasuryBalance, setNctTreasuryBalance] = useState(0);
+  const [userSolBalance, setUserSolBalance] = useState(0);
+  const apy = globalState?.lastEpochApyBps / 100;
+ 
+ 
 
-useEffect(() => {
-  const fetchBalances = async () => {
-    const balance = await connection.getBalance(new PublicKey("4kmZJX3QvYqyP2sSepmJ72pU7NNs21hjdPxZRMV3H3zV"));
-    setNctTreasuryBalance(balance / LAMPORTS_PER_SOL);
+  useEffect(() => {
+    const fetchBalances = async () => {
+      try {
+        const balance = await connection.getBalance(new PublicKey("4kmZJX3QvYqyP2sSepmJ72pU7NNs21hjdPxZRMV3H3zV"));
+        setNctTreasuryBalance(balance / LAMPORTS_PER_SOL);
 
-    if (publicKey) {
-      const balance = await connection.getBalance(publicKey);
-      setUserSolBalance(balance / LAMPORTS_PER_SOL);
+        if (publicKey) {
+          const balance = await connection.getBalance(publicKey);
+          setUserSolBalance(balance / LAMPORTS_PER_SOL);
+        }
+      } catch (error) {
+        console.error("Error fetching balances:", error);
+      }
+    };
+    fetchBalances();
+    
+    const interval = setInterval(fetchBalances, 10000);
+    return () => clearInterval(interval);
+  }, [globalState, publicKey, connection]);
+
+  const userNctContribution = userState ? userState.totalNctContributed.toNumber() / LAMPORTS_PER_SOL : 0.00;
+
+  const addToast = (
+    title: string,
+    message: string,
+    type: ToastType = "success"
+  ) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, title, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
+
+  const handleDeposit = async (amount: number) => {
+    if (!userState) {
+      try {
+        addToast('Initializing', 'Setting up your account...', 'info');
+        await initializeUser();
+        addToast('Account Ready', 'Now processing your deposit...', 'success');
+      } catch (error: any) {
+        throw new Error('Failed to initialize account: ' + error.message);
+      }
+    }
+    
+    await deposit(amount);
+  };
+
+  const handleClaim = async () => {
+    try {
+      await claim();
+      addToast('Claim Successful', 'Your rewards have been claimed!', 'success');
+    } catch (error: any) {
+      addToast('Claim Failed', error.message || 'Transaction failed', 'error');
     }
   };
-  fetchBalances();
+  const currentUnlocked = useMemo(() => {
+    const unlocked = new Set<number>();
+
+    if (depositedSol > 0) unlocked.add(1);
+    if (userNctContribution >= 200) unlocked.add(2);
+    if (userNctContribution >= 500) unlocked.add(3);
+    if (userNctContribution >= 1000) unlocked.add(4);
+    if (userNctContribution >= 2000) unlocked.add(5);
+
+    return unlocked;
+  }, [depositedSol, userNctContribution]);
+
+  // Detect newly unlocked milestones and trigger popup
+  useEffect(() => {
+    const newUnlocks = [...currentUnlocked].filter(
+      id => !triggeredMilestones.current.has(id)
+    );
   
-  const interval = setInterval(fetchBalances, 10000);
-  return () => clearInterval(interval);
-}, [globalState, publicKey, connection]);
-
-const userNctContribution = userState ? userState.totalNctContributed.toNumber() / LAMPORTS_PER_SOL : 0.00;
-
-const addToast = (
-  title: string,
-  message: string,
-  type: ToastType = "success"
-) => {
-  const id = Date.now();
-  setToasts(prev => [...prev, { id, title, message, type }]);
-  setTimeout(() => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, 4000);
-};
-
-const handleDeposit = async (amount: number) => {
-  if (!userState) {
-    try {
-      addToast('Initializing', 'Setting up your account...', 'info');
-      await initializeUser();
-      addToast('Account Ready', 'Now processing your deposit...', 'success');
-    } catch (error: any) {
-      throw new Error('Failed to initialize account: ' + error.message);
-    }
-  }
+    if (newUnlocks.length === 0) return;
   
-  await deposit(amount);
-};
-
-
-const handleClaim = async () => {
+    // FIRST unlock only (lowest id)
+    const firstUnlockId = Math.min(...newUnlocks);
+    const template = milestoneTemplates.find(t => t.id === firstUnlockId);
+    if (!template) return;
   
-    await claim();
-};
+    const milestone: Milestone = {
+      id: template.id,
+      title: template.title,
+      type: template.type,
+      threshold: template.threshold,
+      locked: false,
+      ...(template.value !== undefined && { value: template.value }),
+    };
+  
+    setSelectedMilestone(milestone);
+    setAutoFlip(true);
+  
+    addToast('Milestone Unlocked!', `${template.title} achieved!`, 'success');
+  
+    // 🔒 Persist forever
+    triggeredMilestones.current.add(firstUnlockId);
+    localStorage.setItem(
+      "shownMilestones",
+      JSON.stringify([...triggeredMilestones.current])
+    );
+  }, [currentUnlocked]);
 
-const milestones: Milestone[] = [
-  {
-    id: 1,
-    title: "Rewards Claimed",
-    type: "CLAIM",
-    value: 0,
-    threshold: "Claim once",
-    locked: (userState?.totalClaims?.toNumber() ?? 0) === 0,
-  },
-  {
-    id: 2,
-    title: "Carbon Reducer I",
-    type: "CARBON",
-    value: 200,
-    threshold: "200 SOL Burned",
-    locked: userNctContribution < 200,
-  },
-  {
-    id: 3,
-    title: "Carbon Reducer II",
-    type: "CARBON",
-    value: 500,
-    threshold: "500 SOL Burned",
-    locked: userNctContribution < 500,
-  },
-  {
-    id: 4,
-    title: "Carbon Reducer III",
-    type: "CARBON",
-    value: 1000,
-    threshold: "1,000 SOL Burned",
-    locked: userNctContribution < 1000,
-  },
-  {
-    id: 5,
-    title: "Carbon Reducer IV",
-    type: "CARBON",
-    value: 2000,
-    threshold: "2,000 SOL Burned",
-    locked: userNctContribution < 2000,
-  },
-];
+
+  const milestoneTemplates = [
+    { id: 1, title: "First Contribution", type: "DEPOSIT" as const, threshold: "Make your first deposit" },
+    { id: 2, title: "Carbon Reducer I", type: "CARBON" as const, threshold: "200 SOL Burned", value: 200 },
+    { id: 3, title: "Carbon Reducer II", type: "CARBON" as const, threshold: "500 SOL Burned", value: 500 },
+    { id: 4, title: "Carbon Reducer III", type: "CARBON" as const, threshold: "1,000 SOL Burned", value: 1000 },
+    { id: 5, title: "Carbon Reducer IV", type: "CARBON" as const, threshold: "2,000 SOL Burned", value: 2000 },
+  ];
 
   return (
     <div className="min-h-screen bg-[#050608] text-white font-sans selection:bg-[#00FF94] selection:text-black overflow-x-hidden">
-      
+      {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-[#00FF94] opacity-[0.04] blur-[200px] rounded-full"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-500 opacity-[0.03] blur-[200px] rounded-full"></div>
       </div>
 
-      <Navbar  />
+      <Navbar />
       <ToastContainer toasts={toasts} />
       
       <main className="relative z-10 max-w-[1400px] mx-auto px-4 md:px-8 py-32">
-        
+        {/* Hero section */}
         <div className="mb-16 relative">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-              <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-white mb-6 leading-[0.9]">
-                Regenerative <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF94] to-emerald-700">
-                  Finance Engine
-                </span>
-              </h1>
-              <div className="h-1.5 w-32 bg-[#00FF94] mb-8 shadow-[0_0_20px_#00FF94]"></div>
-              <p className="max-w-2xl text-gray-400 font-mono text-sm leading-relaxed border-l-2 border-white/10 pl-6">
-                Generate compounded returns on Solana while automatically offsetting carbon with AI-driven RWA strategies.
-              </p>
+            <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter text-white mb-6 leading-[0.9]">
+              Regenerative <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF94] to-emerald-700">
+                Finance Engine
+              </span>
+            </h1>
+            <div className="h-1.5 w-32 bg-[#00FF94] mb-8 shadow-[0_0_20px_#00FF94]"></div>
+            <p className="max-w-2xl text-gray-400 font-mono text-sm leading-relaxed border-l-2 border-white/10 pl-6">
+              Generate compounded returns on Solana while automatically offsetting carbon with AI-driven RWA strategies.
+            </p>
           </motion.div>
         </div>
 
+        {/* Stats */}
+        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-16">
-            <StatCard icon={Wind} label="Your Burn" value={`${parseFloat(userNctContribution.toFixed(2))} SOL`} sub="Connect Wallet" highlight={true} />
-            <StatCard icon={Globe} label="Protocol Total" value={`${nctTreasuryBalance.toFixed(2)} SOL`} sub="Global" />
-            <StatCard icon={Activity} label="Efficiency" value="99.9%" sub="vs TradFi" />
-            <StatCard icon={Trees} label="Real Impact" value="28 Trees" sub="Equivalence" />
-        </div>
-
+         <StatCard 
+           icon={Wind} 
+           label="Your Burn"
+           value={
+             nctLoading || !nctPriceInSOL
+             ? ''
+             : `${((userNctContribution ) / nctPriceInSOL).toFixed(2)} NCT`
+            } 
+            sub="Connect Wallet"
+            highlight={true} 
+        />
+  <StatCard 
+    icon={Globe} 
+    label="Protocol Total"
+    value={
+      nctLoading || !nctPriceInSOL
+        ? ''
+        : `${((nctTreasuryBalance ) / nctPriceInSOL).toFixed(2)} NCT`
+    } 
+    sub="Global"
+    highlight={false} 
+  />
+  
+  <StatCard icon={Activity} label="Efficiency" value="99.9%" sub="vs TradFi" />
+  <StatCard 
+  icon={Trees} 
+  label="Real Impact" 
+  value={
+    nctLoading || !nctPriceInSOL
+      ? ''
+      : `${(((nctTreasuryBalance ) / nctPriceInSOL) * 31).toFixed(0)} Trees`
+  } 
+  sub="Equivalence" 
+/>
+</div>
+        
+        {/* Vault + Terminal */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-auto lg:h-[650px] mb-20">
-            <div className="lg:col-span-7 h-full">
-               <DepositVault 
-                 addToast={addToast} 
-                 walletAddress={walletAddress} 
-                 userSolBalance={userSolBalance}
-                 phase={phase}
-                 depositedSol={depositedSol}
-                 estimatedYieldSol={estimatedYieldSol}
-                 onDeposit={handleDeposit}
-                 onClaim={handleClaim}
-                 loading={loading}
-                 userState={userState}
-                 refresh={refetch}
-                 apy={apy}
-               />
-            </div>
-            <div className="lg:col-span-5 h-full">
-                <SynapseTerminal />
-            </div>
+          <div className="lg:col-span-7 h-full">
+            <DepositVault 
+              addToast={addToast} 
+              walletAddress={walletAddress} 
+              userSolBalance={userSolBalance}
+              phase={phase}
+              depositedSol={depositedSol}
+              estimatedYieldSol={estimatedYieldSol}
+              onDeposit={handleDeposit}
+              onClaim={handleClaim}
+              loading={loading}
+              userState={userState}
+              refresh={refetch}
+              apy={apy}
+            />
+          </div>
+          <div className="lg:col-span-5 h-full">
+            <SynapseTerminal />
+          </div>
         </div>
 
+        {/* Milestones */}
         <div className="border-t border-white/10 pt-16">
-            <div className="flex justify-between items-end mb-10">
-                <div>
-                    <h3 className="text-3xl font-black uppercase tracking-tight mb-1">Impact Milestones</h3>
-                    <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">Collect to Unlock Rewards</p>
-                </div>
-                <button className="flex items-center gap-2 text-xs font-mono text-[#00FF94] uppercase tracking-widest hover:underline">
-                    View Collection <ExternalLink size={12} />
-                </button>
+          <div className="flex justify-between items-end mb-10">
+            <div>
+              <h3 className="text-3xl font-black uppercase tracking-tight mb-1">Impact Milestones</h3>
+              <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">Collect to Unlock Rewards</p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                {milestones.map((m) => (
-                  <ImpactCard key={m.id} item={m} onClick={setSelectedMilestone} />
-                ))}
-            </div>
-        </div>
+            <button className="flex items-center gap-2 text-xs font-mono text-[#00FF94] uppercase tracking-widest hover:underline">
+              View Collection <ExternalLink size={12} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {milestoneTemplates.map((template) => {
+              const locked = template.type === "DEPOSIT"
+                ? depositedSol === 0
+                : userNctContribution < (template.value ?? 0);
 
+              const milestone: Milestone = {
+                id: template.id,
+                title: template.title,
+                type: template.type,
+                threshold: template.threshold,
+                locked,
+                ...(template.value !== undefined && { value: template.value }),
+              };
+
+              return (
+                <ImpactCard
+                  key={template.id}
+                  item={milestone}
+                  onClick={() => {
+                    if (!milestone.locked) {
+                      setSelectedMilestone(milestone);
+                      setAutoFlip(false);
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
       </main>
 
       <Footer />
@@ -921,12 +1017,14 @@ const milestones: Milestone[] = [
           item={selectedMilestone}
           userState={userState}
           userNctContribution={userNctContribution}
+          depositedSol={depositedSol}   
           onClose={() => setSelectedMilestone(null)}
+          autoFlip={autoFlip}
         />
         )}
       </AnimatePresence>
 
-      <style>{`
+      <style >{`
         .perspective-1000 { perspective: 1000px; }
         .preserve-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
