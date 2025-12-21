@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Leaf, Wallet, Trophy, type LucideIcon,
-  Wind, Activity, Zap, Globe, Trees, Cpu, Lock, X, Share2, Hash, ChevronRight, CheckCircle, ExternalLink, Info,
+  Wind, Activity, Zap, Globe, Trees, Cpu, Lock, X,  CheckCircle, ExternalLink, Info,
   RefreshCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -500,8 +500,7 @@ const ImpactCard: React.FC<{
   </motion.div>
 );
 
-const shortTx = (tx?: string) =>
-  tx ? `${tx.slice(0, 4)}...${tx.slice(-4)}` : "—";
+
 
 const Row: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="flex justify-between items-center">
@@ -518,7 +517,7 @@ const CardModal: React.FC<{
   depositedSol: number; 
   onClose: () => void;
   autoFlip?: boolean;
-}> = ({ item, userState, userNctContribution,depositedSol,  onClose, autoFlip = false }) => {
+}> = ({ item,  userNctContribution,depositedSol,  onClose, autoFlip = false }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const { priceInSOL: nctPriceInSOL, loading: nctLoading } = useNCTPriceInSOL();
   const [canFlip, setCanFlip] = useState(false);

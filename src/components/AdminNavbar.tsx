@@ -1,6 +1,6 @@
 // components/AdminNavbar.tsx
 import React from 'react';
-import { Leaf, Wallet, ShieldAlert } from 'lucide-react';
+import {  Wallet, ShieldAlert } from 'lucide-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 
