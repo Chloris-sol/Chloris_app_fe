@@ -699,7 +699,7 @@ const Footer = () => (
           </li>
           <li className="hover:text-[#00FF94] cursor-pointer transition-colors">
             <a
-              href="https://github.com/"
+              href="https://github.com/Chloris-sol"
               target="_blank"
               rel="noopener noreferrer"
               className=" transition-colors"
@@ -709,10 +709,10 @@ const Footer = () => (
           </li>
           <li className="hover:text-[#00FF94] cursor-pointer transition-colors">
             <a
-              href="mailto:chloris@gmail.com"
+              href="mailto:chlorissolana@gmail.com"
               className="transition-colors"
             >
-              chloris@gmail.com
+              chlorissolana@gmail.com
             </a>
           </li>
         </ul>
